@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akıllı Garson | Warm Minimalism</title>
+    <style>
+        
+        :root {
+            --bg-cream: #F5F2EB; 
+            --text-dark: #1C1B1A; 
+            --accent-rust: #9A5A3A; 
+            --bubble-garson: #FFFFFF; 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-cream);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 10px;
+        }
+
+        
+        #chat-container {
+            width: 100%;
+            max-width: 500px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            
+        }
+
+        
+        #chat-header {
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 1px solid rgba(28, 27, 26, 0.1); 
+            margin-bottom: 10px;
+        }
+
+        #chat-header h2 {
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            font-size: 28px;
+            font-weight: normal;
+            font-style: italic;
+            color: var(--text-dark);
+            letter-spacing: 1px;
+        }
+
+        
+        #sohbet-gecmisi {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+        }
+
+        
+        #sohbet-gecmisi::-webkit-scrollbar { width: 4px; }
+        #sohbet-gecmisi::-webkit-scrollbar-thumb { background-color: rgba(154, 90, 58, 0.3); border-radius: 10px; }
+
+        
+        .mesaj {
+            margin-bottom: 20px;
+            display: flex;
+            max-width: 85%;
+            animation: fadeIn 0.4s ease-in-out; 
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .mesaj-icerik {
+            padding: 16px 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            border-radius: 20px; 
+        }
+
+        
+        .musteri {
+            align-self: flex-end; 
+        }
+        .musteri .mesaj-icerik {
+            background-color: var(--accent-rust);
+            color: var(--bg-cream);
+            border-bottom-right-radius: 4px; 
+        }
+
+        
+        .garson {
+            align-self: flex-start; 
+        }
+        .garson .mesaj-icerik {
+            background-color: var(--bubble-garson);
+            color: var(--text-dark);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            border: 1px solid rgba(28, 27, 26, 0.05);
+        }
+
+        
+        #input-alani {
+            padding: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 15px 20px;
+            font-size: 15px;
+            border: 1px solid rgba(28, 27, 26, 0.2);
+            border-radius: 30px; /* Hap (pill) tasarımı */
+            background-color: transparent;
+            color: var(--text-dark);
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-rust);
+        }
+        
+        input[type="text"]::placeholder {
+            color: rgba(28, 27, 26, 0.4);
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 16px;
+            font-family: 'Georgia', serif; 
+            background-color: transparent;
+            color: var(--accent-rust);
+            border: 1px solid var(--accent-rust);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--accent-rust);
+            color: var(--bg-cream);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chat-container">
+        <div id="chat-header">
+            <h2>Akıllı Garson</h2>
+        </div>
+        
+        <div id="sohbet-gecmisi">
+            </div>
+        
+        <div id="input-alani">
+            <input type="text" id="kullanici-mesaji" placeholder="Bugün ne tavsiye edersin?">
+            <button onclick="mesajGonder()">Gönder</button>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            ekranaYaz("Hoş geldiniz. Ben restoranımızın akıllı garsonuyum. Menümüzdeki eşsiz lezzetlerle ilgili her türlü sorunuzu cevaplayabilir, damak tadınıza uygun tavsiyelerde bulunabilirim.", "garson");
+        };
+
+        async function mesajGonder() {
+            const mesajKutusu = document.getElementById("kullanici-mesaji");
+            const mesaj = mesajKutusu.value.trim();
+            if (!mesaj) return;
+
+            ekranaYaz(mesaj, "musteri");
+            mesajKutusu.value = "";
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/garsona-sor", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mesaj: mesaj })
+                });
+                
+                if (!response.ok) throw new Error('Backend bağlantısı kurulamadı.');
+
+                const veri = await response.json();
+                ekranaYaz(veri.garsonun_cevabi, "garson");
+            } catch (error) {
+                ekranaYaz("Şu an mutfakla iletişimimde bir sorun var, lütfen tekrar deneyin.", "garson");
+                console.error(error);
+            }
+        }
+
+        document.getElementById("kullanici-mesaji").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                mesajGonder();
+            }
+        });
+
+        function ekranaYaz(metin, gonderen) {
+            const sohbetKutusu = document.getElementById("sohbet-gecmisi");
+            
+            const mesajDiv = document.createElement("div");
+            mesajDiv.className = "mesaj " + gonderen;
+            
+            const icerikDiv = document.createElement("div");
+            icerikDiv.className = "mesaj-icerik";
+            icerikDiv.innerHTML = metin.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            
+            mesajDiv.appendChild(icerikDiv);
+            sohbetKutusu.appendChild(mesajDiv);
+            sohbetKutusu.scrollTop = sohbetKutusu.scrollHeight; 
+        }
+    </script>
+</body>
+</html>
